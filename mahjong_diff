@@ -1,0 +1,243 @@
+diff MajongSources_New/Mahjong.cs MahjongSources_Old/Mahjong.cs
+
+
+I don't think these includes are necessary. whoops.
+1,2d0
+< using System.Drawing;
+< using System.Globalization;
+
+
+New value for Enum TsumoGiriDisplay:
+OneDiscard: highlight only the last tsuogiri discard.
+24d21
+<         OneDiscard,
+
+New public field: GameObject to keep track of the dora highlight feature toggle.
+I don't know if this is proper unity, but it works. 
+49d45
+<         public GameObject _doraHighlight = null;
+
+New constants. Useful later.
+106,107d101
+<         private UnityEngine.Color TILE_DORA_HIGHLIGHT = new UnityEngine.Color(1.0f, 0.7f, 0.7f, 1.0f);
+<         private UnityEngine.Color TILE_TSUMOGIRI_HIGHLIGHT = new UnityEngine.Color(0.7f, 0.7f, 0.7f, 1.0f);
+
+
+New function:
+HighlightDoras() just returns if the dora highlight is enabled or not.
+I added a new empty gameobject for the sole purpose of tracking this. Again, I don't know if this is proper unity.
+
+New function:
+AllPlayersPresent() checks if all players are present, including CPUs.
+
+New function:
+HighlightTile() changes material properties for the tile. Handles both dora highlights and discard highlights.
+Adjust as needed. together with the previous constants.
+346,418d339
+<         private bool HighlightDoras()
+<         {
+<             return _doraHighlight != null && _doraHighlight.activeSelf;
+<         }
+< 
+<         private bool AllPlayersPresent()
+<         {
+<             int entries = 0;
+<             for (int i = 0; i < 4; ++i)
+<             {
+<                 if (entry[i]) 
+<                 {
+<                     entries++;
+<                 }
+<             }
+<             return entries >= 4;
+<         }
+< 
+<         private void HighlightTile(Transform tile, int tileId, int[] doras, bool isTsumogiri)
+<         {
+<             if (HighlightDoras() && AllPlayersPresent())
+<             {
+<                 var meshRenderer = tile.GetComponent<MeshRenderer>();
+< 
+<                 // Read the original color from the renderer
+<                 var materialPropertyBlock = new MaterialPropertyBlock();
+<                 meshRenderer.GetPropertyBlock(materialPropertyBlock);
+< 
+<                 UnityEngine.Color finalColor = new UnityEngine.Color(1f, 1f, 1f, 1f);
+<                 UnityEngine.Color finalEmission = new UnityEngine.Color(0.3522f, 0.3522f, 0.3522f, 1f);
+< 
+<                 //Debug.Log("Doras length: " + doras.Length);
+< 
+<                 for (int i = 0; i < doras.Length; i++)
+<                 {
+<                     if (doras[i] > 0)
+<                     {
+<                         //Debug.Log("Dora: " + doras[i] + " for tile: " + i);
+<                     }
+<                     if (NormalizeTileId(tileId) == doras[i])
+<                     {
+<                         finalEmission += new UnityEngine.Color(0f, 0.4f, 0f, 0f);
+<                     }
+<                 }
+< 
+<                 // akadora. if number bits are 6, then its akadora
+<                 if (((tileId >> 2) & 0xF) == 6)
+<                 {
+<                         finalEmission += new UnityEngine.Color(0f, 0.4f, 0f, 0f);
+<                 }
+< 
+<                 // clamp
+<                 {
+<                     finalEmission.g = finalEmission.g > 0.7f ? 0.7f : finalEmission.g;
+<                 }
+< 
+<                 if (isTsumogiri)
+<                 {
+<                     finalEmission.r = finalEmission.r < 0.7f ? 0.7f : finalEmission.r;
+<                     finalEmission.g = finalEmission.g < 0.7f ? 0.7f : finalEmission.g;
+<                     finalEmission.b = finalEmission.b < 0.7f ? 0.7f : finalEmission.b;
+<                 }
+< 
+< 
+< 
+<                 // Keep original color, only update emission
+<                 materialPropertyBlock.SetColor("_Color", finalColor);
+<                 materialPropertyBlock.SetColor("_EmissionColor", finalEmission);
+< 
+<                 meshRenderer.SetPropertyBlock(materialPropertyBlock);
+<             }
+<         }
+< 
+
+
+IIRC, this is for making sure when the resync button was pressed, tiles were redraun again.
+1385,1386d1305
+<             UpdateView();
+< 
+
+Just documenting how the tile id value works for myself to find how to deal with akadora.
+6034,6042d5952
+<         // Tile id description
+<         // index, type, number, aka
+<         // if number is greater than or equal to 6, or red add one (?)
+<         // type: no more than 5
+<         // number: 1-10, where 5 is akadora
+<         // index = tile number (0-3)
+<         // TTTNNNNII
+<         // normalized is just no red, index 0
+< 
+
+
+highlightUraDora flag determine whether or not we should highlight ura dora. This should only happen when someone riichis, or double riichis.
+7060,7061d6969
+<             bool highlightUraDora = false;
+< 
+7108d7015
+<                                     highlightUraDora = true;
+7112d7018
+<                                     highlightUraDora = true;
+
+
+doraTiles will store the list of dora tiles. Udon doesn't expose List, so we have to do some manual merging, and add the uradoras if necessary. 
+7371,7388d7276
+<             int[] doraTiles = GetDoras();
+<             if ((gameState == GAMESTATE_TSUMO || gameState == GAMESTATE_RON) && highlightUraDora)
+<             {
+<                     int[] uraDoraTiles = GetUraDoras();
+<                     int[] mergedTiles = new int[doraTiles.Length + uraDoraTiles.Length];
+<                     
+<                     for (int i = 0; i < doraTiles.Length; i++)
+<                     {
+<                         mergedTiles[i] = doraTiles[i];
+<                     }                    
+<                     for (int i = 0; i < uraDoraTiles.Length; i++)
+<                     {
+<                         mergedTiles[doraTiles.Length + i] = uraDoraTiles[i];
+<                     }
+< 
+<                     doraTiles = mergedTiles;
+<             }
+< 
+
+highlight doras from flipped tiles. we manage the highlighted tiles on a case by case basis.
+we should only highlight visible tiles.
+7460,7464d7347
+<                 if (flip)
+<                 {
+<                     HighlightTile(tile, wallTiles[i], doraTiles, false);
+<                 }
+< 
+
+highlight doras from called tiles. (from chi, pon, kan)
+7549d7430
+<                         HighlightTile(tile, eatedSetsTiles[i][j][k], doraTiles, false);
+
+highlight all doras for the spectator, and only the ones in your own hand for players.
+7620,7624d7500
+<                     if (!entryAny || entrySelf[i] || gameState == GAMESTATE_TSUMO || gameState == GAMESTATE_RON)
+<                     {
+<                         HighlightTile(tile, handTiles[i][j], doraTiles, false);
+<                     }
+< 
+
+IIRC, this is to hide the tiles (by turning them over), while a resync occurs.
+7627c7503,7509
+<                     if(!AllPlayersPresent())
+---
+> 
+>                     if (open)
+>                     {
+>                         position = new Vector3(0.35f, tileDepthHalf, x * tileWidth + handTileX);
+>                         rotation = Quaternion.Euler(270.0f, 90.0f, 0.0f);
+>                     }
+>                     else if (hide)
+7634,7648c7516,7517
+<                         if (open)
+<                         {
+<                             position = new Vector3(0.35f, tileDepthHalf, x * tileWidth + handTileX);
+<                             rotation = Quaternion.Euler(270.0f, 90.0f, 0.0f);
+<                         }
+<                         else if (hide)
+<                         {
+<                             position = new Vector3(0.35f, tileDepthHalf, x * tileWidth + handTileX);
+<                             rotation = Quaternion.Euler(90.0f, 90.0f, 0.0f);
+<                         }
+<                         else
+<                         {
+<                             position = new Vector3(0.35f, tileHeightHalf, x * tileWidth + handTileX);
+<                             rotation = Quaternion.Euler(0.0f, 90.0f, 0.0f);
+<                         }
+---
+>                         position = new Vector3(0.35f, tileHeightHalf, x * tileWidth + handTileX);
+>                         rotation = Quaternion.Euler(0.0f, 90.0f, 0.0f);
+
+Handles new enum value: only highlight if the last discard was tsumogiri. showTsumogiri tracks if the tile should be highlighted.
+7750,7754d7618
+<                         case TsumogiriDisplayMode.OneDiscard:
+<                             int lastTurn = turn - 1;
+<                             lastTurn = lastTurn < 0 ? 3 : lastTurn;
+<                             showTsumogiri = j == numDiscardedTiles[i] - 1 && lastTurn == i;
+<                             break;
+
+Joint handling of tsumogiri display + dora highlight. If dora highlight is not enabled, we just highlight it.
+7764,7765c7628
+<                         HighlightTile(tile, discardedTiles[i][j], doraTiles, isTsumogiri);
+<                         if (isTsumogiri && !HighlightDoras())
+---
+>                         if (isTsumogiri)
+7768,7769c7631,7632
+<                             materialPropertyBlock.SetColor("_Color", new UnityEngine.Color(0.7f, 0.7f, 0.7f, 1.0f));
+<                             materialPropertyBlock.SetColor("_EmissionColor", new UnityEngine.Color(0.7f, 0.7f, 0.7f, 1.0f));
+---
+>                             materialPropertyBlock.SetColor("_Color", new Color(0.7f, 0.7f, 0.7f, 1.0f));
+>                             materialPropertyBlock.SetColor("_EmissionColor", new Color(0.7f, 0.7f, 0.7f, 1.0f));
+7775,7778d7637
+<                     else
+<                     {
+<                         HighlightTile(tile, discardedTiles[i][j], doraTiles, false);
+<                     }
+7788,7789c7647,7648
+<                             materialPropertyBlock.SetColor("_Color", new UnityEngine.Color(1.0f, 0.7f, 0.7f, 1.0f));
+<                             materialPropertyBlock.SetColor("_EmissionColor", new UnityEngine.Color(1.0f, 0.7f, 0.7f, 1.0f));
+---
+>                             materialPropertyBlock.SetColor("_Color", new Color(1.0f, 0.7f, 0.7f, 1.0f));
+>                             materialPropertyBlock.SetColor("_EmissionColor", new Color(1.0f, 0.7f, 0.7f, 1.0f));

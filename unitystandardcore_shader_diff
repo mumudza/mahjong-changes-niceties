@@ -1,0 +1,68 @@
+Diff: UnityStandardCore.cginc vs UnityStandardCoreNoMirror.cginc
+
+Explanation: UnityStandardCore is imported by Filamented shaders.
+The required changes are simple: All cases where normals, albedo, and emission are impacted in any way, we must return the value so that the tile is not visible.
+Normals must also be changed due to the change in lighting making it possible to tell what the tile actually is.
+If you have anything on the shader that can somehow show the tile, it needs a similar check.
+The emission value is half of what I had set it to. Dont ask why, because I dont know why it behaves that way.
+
+
+30a31,35
+> 
+> 
+> uniform float _VRChatMirrorMode;
+> 
+> 
+164c169,174
+<     material.baseColor = baseColor;
+---
+>     if (_VRChatMirrorMode > 0) {
+>         material.baseColor = half4(1.0, 1.0, 1.0, 1.0);
+>     } else {
+>         material.baseColor = baseColor;
+>     }
+>     
+185c195,200
+<     material.baseColor = baseColor;
+---
+>     ;
+>     if (_VRChatMirrorMode > 0) {
+>         material.baseColor = half4(1.0, 1.0, 1.0, 1.0);
+>     } else {
+>         material.baseColor = baseColor;
+>     }
+203c218,222
+<     material.baseColor = baseColor;
+---
+>     if (_VRChatMirrorMode > 0) {
+>         material.baseColor = half4(1.0, 1.0, 1.0, 1.0);
+>     } else {
+>         material.baseColor = baseColor;
+>     }
+221c240,244
+<     material.baseColor = baseColor;
+---
+>     if (_VRChatMirrorMode > 0) {
+>         material.baseColor = half4(1.0, 1.0, 1.0, 1.0);
+>     } else {
+>         material.baseColor = baseColor;
+>     }
+259c282,286
+<     material.normal = NormalInTangentSpace(i_tex);
+---
+>     if (_VRChatMirrorMode > 0) {
+>         material.normal = half3(0.5, 0.5, 1.0);
+>     } else {
+>         material.normal = NormalInTangentSpace(i_tex);
+>     }
+262,263c289,295
+<     material.emissive.rgb = Emission (i_tex);
+<     material.emissive.a = 1.0;
+---
+>     if (_VRChatMirrorMode > 0) {
+>         material.emissive.rgb = half3(0.1761, 0.1761, 0.1761);
+>         material.emissive.a = 1.0;
+>     } else {
+>         material.emissive.rgb = Emission (i_tex);
+>         material.emissive.a = 1.0;
+>     }

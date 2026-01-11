@@ -1,0 +1,18 @@
+Diff: Standard.shader vs StandardNoMirror.shader
+
+Explanation: We are just making a new shader based on the existing filamented one, which imports our own.
+
+
+
+3c3
+< Shader "Silent/Filamented"
+---
+> Shader "Silent/FilamentedNoMirror"
+131c131
+<             #include "UnityStandardCoreForward.cginc"
+---
+>             #include "UnityStandardCoreForwardNoMirror.cginc"
+171c171
+<             #include "UnityStandardCoreForward.cginc"
+---
+>             #include "UnityStandardCoreForwardNoMirror.cginc"
