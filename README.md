@@ -27,3 +27,10 @@ These are files that don't risk making me run into copyright issues. Adjust the 
 - UdonToggleTileMaterials.cs: Switches material of tile's front. Can be adjusted to handle several textures/materials.
 
 Both UdonTileBackColor and UdonToggleTileMaterials expect to be provided with all of the TilesSet gameObjects in the scene
+
+## Other files
+
+Mostly assets.
+
+- chicha\_new.png: Texture for chicha (chisha?) indicator. New texture includes roman letters for cardinal signs.
+- compass.fbx: FBX for compass with roman letters. Make it a children of Directions gameobject in the prefab, with a scale of 0.01, and a position of 0, 2.6e-05, 0. Use the Table, Text and WhiteText materials contained within the prefab.
