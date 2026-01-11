@@ -1,3 +1,12 @@
+# Features:
+
+- Multi color tile backs
+- Switch tile front textures
+- Make tiles dont show up in mirrors (See shader diffs)
+- Dora highlight
+- Hide tiles when resyncing
+- Single discard tsumogiri display
+
 # Files
 
 ## Diffs
